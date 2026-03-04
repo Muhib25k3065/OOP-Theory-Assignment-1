@@ -1,0 +1,257 @@
+import java.util.*;
+
+// ================= USER (Base Class) =================
+abstract class User {
+    protected int userId;
+    protected String name;
+    protected String email;
+    protected String phone;
+    protected String city;
+
+    public static int totalUsers = 0;   // Static member
+
+    public User(int userId, String name, String email, String phone, String city) {
+        this.userId = userId;
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.city = city;
+        totalUsers++;
+    }
+
+    public void displayUser() {
+        System.out.println("User: " + name + " | Email: " + email);
+    }
+}
+
+// ================= SELLER =================
+class Seller extends User {
+
+    public Seller(int userId, String name, String email, String phone, String city) {
+        super(userId, name, email, phone, city);
+    }
+
+    public Listing createListing(int id, Vehicle vehicle) {
+        return new Listing(id, vehicle, this);
+    }
+}
+
+// ================= BUYER =================
+class Buyer extends User {
+
+    private Listing[] favorites = new Listing[20];   // Array of objects
+    private int favCount = 0;
+
+    public Buyer(int userId, String name, String email, String phone, String city) {
+        super(userId, name, email, phone, city);
+    }
+
+    public void addFavorite(Listing listing) {
+        favorites[favCount++] = listing;
+        System.out.println("Added to favorites.");
+    }
+
+    public void viewFavorites() {
+        for (int i = 0; i < favCount; i++) {
+            favorites[i].displayListing();
+        }
+    }
+
+    public void sendMessage(Seller seller, String text) {
+        Message msg = new Message(this, seller, text);
+        msg.displayMessage();
+    }
+}
+
+// ================= ADMIN =================
+class Admin extends User {
+
+    public Admin(int userId, String name, String email, String phone, String city) {
+        super(userId, name, email, phone, city);
+    }
+
+    public void approveListing(Listing listing) {
+        listing.approveListing();
+        System.out.println("Listing approved.");
+    }
+
+    public void removeListing(Listing listing) {
+        listing.removeListing();
+        System.out.println("Listing removed.");
+    }
+}
+
+// ================= ENGINE (Composition) =================
+class Engine {
+    private String type;
+    private int horsepower;
+    private double capacity;
+    private String fuelType;
+    private boolean turbo;
+
+    public Engine(String type, int horsepower, double capacity,
+                  String fuelType, boolean turbo) {
+        this.type = type;
+        this.horsepower = horsepower;
+        this.capacity = capacity;
+        this.fuelType = fuelType;
+        this.turbo = turbo;
+    }
+
+    public void displayEngine() {
+        System.out.println("Engine: " + type + " " + capacity + "L " + fuelType);
+    }
+}
+
+// ================= VEHICLE =================
+class Vehicle {
+    private String brand;
+    private String model;
+    private int year;
+    private double price;
+    private double mileage;
+    private Engine engine;  // Composition
+
+    public Vehicle(String brand, String model, int year,
+                   double price, double mileage, Engine engine) {
+        this.brand = brand;
+        this.model = model;
+        this.year = year;
+        this.price = price;
+        this.mileage = mileage;
+        this.engine = engine;
+    }
+
+    public void displayDetails() {
+        System.out.println(brand + " " + model + " (" + year + ")");
+        System.out.println("Price: " + price);
+        System.out.println("Mileage: " + mileage);
+        engine.displayEngine();
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+}
+
+// ================= LISTING =================
+class Listing {
+    public static int totalListings = 0;   // Static member
+
+    private int listingID;
+    private Vehicle vehicle;   // Composition
+    private Seller seller;
+    private boolean approved;
+
+    public Listing(int listingID, Vehicle vehicle, Seller seller) {
+        this.listingID = listingID;
+        this.vehicle = vehicle;
+        this.seller = seller;
+        this.approved = false;
+        totalListings++;
+    }
+
+    public void approveListing() {
+        approved = true;
+    }
+
+    public void removeListing() {
+        approved = false;
+    }
+
+    public void displayListing() {
+        if (approved) {
+            System.out.println("Listing ID: " + listingID);
+            vehicle.displayDetails();
+        }
+    }
+
+    public Vehicle getVehicle() {
+        return vehicle;
+    }
+}
+
+// ================= MESSAGE =================
+class Message {
+    private Buyer sender;
+    private Seller receiver;
+    private String text;
+    private Date date;
+
+    public Message(Buyer sender, Seller receiver, String text) {
+        this.sender = sender;
+        this.receiver = receiver;
+        this.text = text;
+        this.date = new Date();
+    }
+
+    public void displayMessage() {
+        System.out.println("Message sent: " + text);
+    }
+}
+
+// ================= MARKETPLACE =================
+class Marketplace {
+
+    public static final int MAX_LISTINGS = 100;   // Constant
+    private Listing[] listings = new Listing[MAX_LISTINGS];
+    private int listingCount = 0;
+
+    public void addListing(Listing listing) {
+        listings[listingCount++] = listing;
+    }
+
+    public void searchByBrand(String brand) {
+        for (int i = 0; i < listingCount; i++) {
+            if (listings[i].getVehicle().getBrand().equalsIgnoreCase(brand)) {
+                listings[i].displayListing();
+            }
+        }
+    }
+}
+
+// ================= MAIN =================
+public class Main {
+
+    public static final String COMPANY_NAME = "PakWheels Clone"; // Constant
+
+    public static void main(String[] args) {
+
+        System.out.println("Welcome to " + COMPANY_NAME);
+
+        // Create Users
+        Seller seller = new Seller(1, "Ali", "ali@email.com", "0300", "Karachi");
+        Buyer buyer = new Buyer(2, "Ahmed", "ahmed@email.com", "0311", "Lahore");
+        Admin admin = new Admin(3, "Admin", "admin@email.com", "0000", "Islamabad");
+
+        // Create Engine (Composition)
+        Engine engine = new Engine("VVTi", 180, 1.8, "Petrol", false);
+
+        // Create Vehicle
+        Vehicle vehicle = new Vehicle("Toyota", "Corolla", 2020,
+                4500000, 25000, engine);
+
+        // Seller creates Listing
+        Listing listing = seller.createListing(101, vehicle);
+
+        // Marketplace
+        Marketplace marketplace = new Marketplace();
+        marketplace.addListing(listing);
+
+        // Admin approves listing
+        admin.approveListing(listing);
+
+        // Buyer searches
+        marketplace.searchByBrand("Toyota");
+
+        // Buyer saves favorite
+        buyer.addFavorite(listing);
+
+        // Buyer sends message
+        buyer.sendMessage(seller, "Is this car still available?");
+    }
+}
